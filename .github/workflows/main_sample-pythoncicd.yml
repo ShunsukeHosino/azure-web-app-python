@@ -39,25 +39,48 @@ jobs:
           path: |
             . 
             !venv/
+  if:
+    pullrequest:
+      deploy:
+        runs-on: ubuntu-latest
+        needs: build
+        environment:
+          name: 'Production'
+          url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+        steps:
+          - name: Download artifact from build job
+            uses: actions/download-artifact@v2
+            with:
+              name: python-app
+              path: .
+              
+          - name: 'Deploy to Azure Web App'
+            uses: azure/webapps-deploy@v2
+            id: deploy-to-webapp
+            with:
+              app-name: 'sample-pythonCICD'
+              slot-name: 'Production'
+              publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F39A40DF23DD4E97B9476C54F079B883 }}
+  else:
+    deploy:
+      runs-on: ubuntu-latest
+      needs: build
+      environment:
+        name: 'Production'
+        url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v2
-        with:
-          name: python-app
-          path: .
-          
-      - name: 'Deploy to Azure Web App'
-        uses: azure/webapps-deploy@v2
-        id: deploy-to-webapp
-        with:
-          app-name: 'sample-pythonCICD2'
-          slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F39A40DF23DD4E97B9476C54F079B883 }}
+      steps:
+        - name: Download artifact from build job
+          uses: actions/download-artifact@v2
+          with:
+            name: python-app
+            path: .
+            
+        - name: 'Deploy to Azure Web App'
+          uses: azure/webapps-deploy@v2
+          id: deploy-to-webapp
+          with:
+            app-name: 'sample-pythoncicd'
+            slot-name: 'sample-pythoncicd2'
+            publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F39A40DF23DD4E97B9476C54F079B883 }}
